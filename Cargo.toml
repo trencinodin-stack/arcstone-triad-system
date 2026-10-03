@@ -1,0 +1,12 @@
+[package]
+name = "arcstone-triad-system"
+version = "1.2.0"
+edition = "2021"
+authors = ["Jesse Tuohy <@admissibilityscience>"]
+description = "Sovereign Normative Specifications & Public Machine Contracts"
+
+[lib]
+name = "arcstone_triad_invariants"
+path = "core/invariants/aal_traits.rs"
+
+[dependencies]
