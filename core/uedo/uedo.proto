@@ -1,0 +1,37 @@
+syntax = "proto3";
+
+package arcstone.uedo.v1;
+
+message UedoHeader {
+  string uedo_uuid = 1;
+  string timestamp_utc = 2;
+  string target_master_hash = 3; // "A-77-DELTA-SHIELD-LOCKED"
+  int64 sequence_frame_id = 4;
+}
+
+message HumanOperatorVector {
+  string operator_id = 1;
+  string skill_tree_tier = 2;
+  string credential_token_b = 3;
+  string macro_intent_code = 4;
+  string human_ed25519_signature = 5;
+}
+
+message AiSynthesisVector {
+  string model_binary_hash = 1;
+  double predicted_collision_probability = 2;
+  double exergy_budget_kwh = 3;
+}
+
+message ControlPlaneGate {
+  string posix_dominance_state = 1;
+  int32 cops_maintenance_cost = 2; // Fixed 0
+  int32 fixed_precision_digits = 3; // Fixed 8
+}
+
+message UnifiedEnforcementDecisionObject {
+  UedoHeader header = 1;
+  HumanOperatorVector human_operator_vector = 2;
+  AiSynthesisVector ai_synthesis_vector = 3;
+  ControlPlaneGate control_plane_gate = 4;
+}
