@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://specs.arcstoneos.com/v1.2/uedo.schema.json",
+  "title": "Unified Enforcement Decision Object (UEDO v1.2)",
+  "type": "object",
+  "properties": {
+    "header": {
+      "type": "object",
+      "properties": {
+        "uedo_uuid": { "type": "string" },
+        "timestamp_utc": { "type": "string" },
+        "target_master_hash": { "type": "string", "const": "A-77-DELTA-SHIELD-LOCKED" },
+        "sequence_frame_id": { "type": "integer" }
+      },
+      "required": ["uedo_uuid", "timestamp_utc", "target_master_hash", "sequence_frame_id"]
+    },
+    "human_operator_vector": {
+      "type": "object",
+      "properties": {
+        "operator_id": { "type": "string" },
+        "skill_tree_tier": { "type": "string" },
+        "credential_token_b": { "type": "string" },
+        "macro_intent_code": { "type": "string" },
+        "human_ed25519_signature": { "type": "string" }
+      },
+      "required": ["operator_id", "skill_tree_tier", "credential_token_b", "macro_intent_code"]
+    },
+    "ai_synthesis_vector": {
+      "type": "object",
+      "properties": {
+        "model_binary_hash": { "type": "string" },
+        "predicted_collision_probability": { "type": "number" },
+        "exergy_budget_kwh": { "type": "number" }
+      },
+      "required": ["model_binary_hash", "predicted_collision_probability"]
+    },
+    "control_plane_gate": {
+      "type": "object",
+      "properties": {
+        "posix_dominance_state": { "type": "string" },
+        "cops_maintenance_cost": { "type": "integer", "const": 0 },
+        "fixed_precision_digits": { "type": "integer", "const": 8 }
+      },
+      "required": ["posix_dominance_state", "cops_maintenance_cost", "fixed_precision_digits"]
+    }
+  },
+  "required": ["header", "human_operator_vector", "ai_synthesis_vector", "control_plane_gate"]
+}
