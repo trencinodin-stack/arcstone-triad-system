@@ -1,0 +1,29 @@
+# Rust build artifacts
+/target/
+**/*.rs.bk
+Cargo.lock
+
+# C / eBPF compiled objects
+*.o
+*.so
+*.a
+
+# Node / TypeScript / WebGPU artifacts
+node_modules/
+dist/
+.build/
+
+# Operating System / IDE files
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+.idea/
+
+# Local Environment & Secrets
+.env
+.env.*
+*.pem
+*.key
