@@ -1,5 +1,4 @@
 {
-  "$schema": "https://specs.arcstoneos.com/v1.2/system-manifest.schema.json",
   "repository": "arcstone-triad-system",
   "target_master_hash_anchor": "A-77-DELTA-SHIELD-LOCKED",
   "version": "1.2.0-hardened",
