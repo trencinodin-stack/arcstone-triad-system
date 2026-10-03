@@ -1,0 +1,34 @@
+{
+  "$schema": "https://specs.arcstoneos.com/v1.2/tier-domain-unlocks.schema.json",
+  "target_master_hash": "A-77-DELTA-SHIELD-LOCKED",
+  "tiers": [
+    {
+      "tier": "TIER_1",
+      "name": "Earth Proving Ground",
+      "min_rop": 8.0,
+      "unlocked_domains": ["TERRESTRIAL_SURFACE"],
+      "authorized_substrates": ["SOFTWARE_KERNELS", "BIPEDAL_RIGS"]
+    },
+    {
+      "tier": "TIER_2",
+      "name": "Aquatic Abyss",
+      "min_rop": 8.8,
+      "unlocked_domains": ["ABYSSAL_OCEANIC"],
+      "authorized_substrates": ["SUBMERS_PRESSURE_RIGS", "HYDROSTATIC_HARVESTERS"]
+    },
+    {
+      "tier": "TIER_3",
+      "name": "Orbital & Lunar",
+      "min_rop": 9.2,
+      "unlocked_domains": ["LUNAR_VACUUM", "LOW_EARTH_ORBIT"],
+      "authorized_substrates": ["REGOLITH_PRINTERS", "WAKE_SHIELD_FABS"]
+    },
+    {
+      "tier": "TIER_4",
+      "name": "Deep Space & Mars",
+      "min_rop": 9.8,
+      "unlocked_domains": ["DEEP_SPACE", "MARTIAN_SURFACE"],
+      "authorized_substrates": ["INTERPLANETARY_TUGS", "LASER_ABLATION_UNITS"]
+    }
+  ]
+}
