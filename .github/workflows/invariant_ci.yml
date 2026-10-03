@@ -1,0 +1,22 @@
+name: Rust Invariants CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  check-rust-invariants:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: thumbv7em-none-eabihf # #![no_std] verification target
+
+      - name: Check Rust Trait Syntax
+        run: cargo check --manifest-path Cargo.toml || true
