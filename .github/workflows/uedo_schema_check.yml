@@ -19,7 +19,7 @@ jobs:
           node-version: '20'
 
       - name: Install JSON Schema Validator
-        run: npm install -g ajv-cli
+        run: npm install -g ajv-cli ajv-formats
 
       - name: Validate UEDO Schema
-        run: ajv compile -s core/uedo/uedo.schema.json
+        run: ajv compile --spec=draft2020 -s core/uedo/uedo.schema.json
