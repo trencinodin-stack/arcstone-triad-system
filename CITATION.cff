@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+title: "Arcstone Triad System: Sovereign Normative Specifications & UEDO Machine Contracts"
+message: "If you use or reference this specification suite, please cite it as below."
+type: software
+authors:
+  - family-names: "Tuohy"
+    given-names: "Jesse"
+    alias: "admissibilityscience"
+repository-code: "https://github.com/trencinodin-stack/arcstone-triad-system"
+abstract: "Sovereign Normative Specifications, UEDO v1.2 Schemas & Machine Discovery Contracts anchored under Target Master Hash A-77-DELTA-SHIELD-LOCKED."
+version: "1.2.0-hardened"
+date-released: "2026-10-03"
+keywords:
+  - "uedo"
+  - "no-std"
+  - "rust"
+  - "ebpf"
+  - "ai-governance"
+  - "specification-suite"
+license: "MIT"
