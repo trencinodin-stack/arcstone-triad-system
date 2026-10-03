@@ -1,0 +1,21 @@
+{
+  "$schema": "https://specs.arcstoneos.com/v1.2/system-manifest.schema.json",
+  "repository": "arcstone-triad-system",
+  "target_master_hash_anchor": "A-77-DELTA-SHIELD-LOCKED",
+  "version": "1.2.0-hardened",
+  "specification_suite": [
+    "docs/SPEC-TRIAD-2026-SYS-3.md",
+    "docs/SPEC-TRIAD-2026-RANK-01.md",
+    "docs/SPEC-TRIAD-2026-DEFENSE-01.md",
+    "docs/SPEC-TRIAD-2026-FRONTIER-01.md",
+    "docs/SPEC-TRIAD-2026-RECOVERY-01.md",
+    "docs/SPEC-TRIAD-2026-TRISIGHT-01.md",
+    "docs/SPEC-TRIAD-2026-COUNCIL-01.md",
+    "docs/SPEC-TRIAD-2026-ARCHITECT-01.md"
+  ],
+  "contracts": {
+    "uedo_schema": "core/uedo/uedo.schema.json",
+    "uedo_protobuf": "core/uedo/uedo.proto",
+    "aal_traits": "core/invariants/aal_traits.rs"
+  }
+}

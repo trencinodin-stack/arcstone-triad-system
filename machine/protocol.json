@@ -1,0 +1,8 @@
+{
+  "protocol": "UEDO-v1.2",
+  "transport": "MetaMesh / POSIX Real-Time IPC",
+  "encoding": ["JSON", "Protobuf-v3"],
+  "payload_ceiling_bytes": 4096,
+  "fixed_precision": 8,
+  "master_hash_binding": "A-77-DELTA-SHIELD-LOCKED"
+}

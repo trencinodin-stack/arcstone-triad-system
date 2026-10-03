@@ -1,0 +1,11 @@
+{
+  "policy_name": "Arcstone Sovereign Invariant Policy",
+  "target_anchor": "A-77-DELTA-SHIELD-LOCKED",
+  "rules": {
+    "fail_closed_on_breach": true,
+    "max_payload_bytes": 4096,
+    "max_temporal_latency_ms": 11.99,
+    "guardian_index_floor": 1.0,
+    "posix_dominance_lattice": ["POSIX_40_FAIL", "POSIX_12_FREEZE", "POSIX_10_PWC", "POSIX_0_PASS"]
+  }
+}
