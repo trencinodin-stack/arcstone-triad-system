@@ -1,0 +1,34 @@
+{
+  "$schema": "https://specs.arcstoneos.com/v1.2/operator-classes.schema.json",
+  "target_master_hash": "A-77-DELTA-SHIELD-LOCKED",
+  "classes": [
+    {
+      "class_id": "CLASS_ARCHITECT",
+      "title": "Guardian Principal Invariant Architect",
+      "l_initial": 10,
+      "gamma_guardian_floor": 1.0,
+      "role_scope": "Axiomatic law definition, root key seals, system invariant vetos"
+    },
+    {
+      "class_id": "CLASS_TRIARCH",
+      "title": "ATS Triarch Council Member",
+      "l_initial": 10,
+      "gamma_guardian_floor": 1.0,
+      "role_scope": "Judicial review, operator reinstatements, emergency conclave trials"
+    },
+    {
+      "class_id": "CLASS_STEWARD",
+      "title": "Master Network Steward",
+      "l_initial": 5,
+      "gamma_guardian_floor": 1.0,
+      "role_scope": "Infrastructure maintenance, airlock escrow sign-offs, node balancing"
+    },
+    {
+      "class_id": "CLASS_TACTICAL_ENGINEER",
+      "title": "Mechatronic Security Engineer",
+      "l_initial": 3,
+      "gamma_guardian_floor": 1.0,
+      "role_scope": "Active swarm defense, point-defense grid ops, emergency telepresence"
+    }
+  ]
+}
