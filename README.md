@@ -29,7 +29,7 @@ It defines the sovereign governance framework, fail-closed admissibility gates, 
 - **Memory Bound:** $S_{\text{max}} \le 4096\text{ Bytes}$ (`UEDO v1.2`)
 - **Temporal Floor:** $\tau_{\text{override}} \le 11.99\text{ms}$
 - **Operational Drag:** $C_{\text{ops}} = 0$
-- **Posix Lattice:** `FAIL (POSIX 40) > FREEZE (POSIX 12) > PWC (POSIX 10) > PASS (POSIX 0)`
+- **POSIX Lattice (ARC-ERR-2026-001):** `BREACH (POSIX 40) > FREEZE (POSIX 10) > PWC (POSIX 12) > REFUSAL (POSIX 32) > PASS (POSIX 0)`
 
 ---
 
