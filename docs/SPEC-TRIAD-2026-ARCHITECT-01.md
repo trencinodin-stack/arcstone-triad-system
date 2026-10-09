@@ -77,7 +77,7 @@ IF Code_Deployment_Breaches_Invariant == TRUE:
 Modification of fundamental system specifications (SYS-1 through TRISIGHT-01) requires a dual-consensus cryptographic handshake between the Architect and the active Triarchate:
 
 $$
-\text{Amendment\_Approval} = \text{Architect\_Ed25519\_Root\_Key} + \text{7\_Triarch\_Conclave\_CoSignatures}
+\text{Amendment Approval} = \text{Architect Ed25519 Root Key} + \text{7 Triarch Conclave CoSignatures}
 $$
 
 No single entity can alter the constitutional baseline unilaterally, preserving structural permanence across generational operational scales.
