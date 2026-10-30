@@ -26,10 +26,13 @@ It defines the sovereign governance framework, fail-closed admissibility gates, 
 
 ## Technical Invariants
 
-- **Memory Bound:** $S_{\text{max}} \le 4096\text{ Bytes}$ (`UEDO v1.2`)
+- **Memory Bound:** $S_{\text{max}} \le 4096\text{ Bytes}$ (`UEDO v1.2`, static `#! [no_std]` envelope)
 - **Temporal Floor:** $\tau_{\text{override}} \le 11.99\text{ms}$
 - **Operational Drag:** $C_{\text{ops}} = 0$
-- **POSIX Lattice (ARC-ERR-2026-001):** `BREACH (POSIX 40) > FREEZE (POSIX 10) > PWC (POSIX 12) > REFUSAL (POSIX 32) > PASS (POSIX 0)`
+- **Operational Poset Dominance (ARC-ERR-2026-001):**  
+  $$\text{BREACH (POSIX 40)} \succ \text{REFUSAL (POSIX 32)} \succ \text{CORRUPT (POSIX 30)} \succ \text{PWC (POSIX 12)} \succ \text{FREEZE (POSIX 10)} \succ \text{PASS (POSIX 0)}$$
+
+> **Normative Note:** Pre-ingress severity evaluates via the 5-element join-semilattice $L = \{\bot, \ell_1, \ell_2, \ell_3, \top\}$ mapped to $E$ via covariant functor $\Phi$, where $\text{Im}(\Phi) = \{0, 12, 30, 32, 40\}$. `POSIX 12` is normatively locked to Pending Worker Clearance (PWC), and `POSIX 10` (FREEZE) operates as an internal runtime scheduling yield outside $\text{Im}(\Phi)$ per `ARC-ERR-2026-001`.
 
 ---
 
