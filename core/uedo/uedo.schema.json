@@ -3,46 +3,130 @@
   "$id": "https://specs.arcstoneos.com/v1.2/uedo.schema.json",
   "title": "Unified Enforcement Decision Object (UEDO v1.2)",
   "type": "object",
+  "unevaluatedProperties": false,
+  "required": [
+    "header",
+    "human_operator_vector",
+    "ai_synthesis_vector",
+    "control_plane_gate"
+  ],
   "properties": {
     "header": {
       "type": "object",
+      "unevaluatedProperties": false,
+      "required": [
+        "uedo_uuid",
+        "timestamp_utc",
+        "target_master_hash",
+        "sequence_frame_id"
+      ],
       "properties": {
-        "uedo_uuid": { "type": "string" },
-        "timestamp_utc": { "type": "string" },
-        "target_master_hash": { "type": "string", "const": "A-77-DELTA-SHIELD-LOCKED" },
-        "sequence_frame_id": { "type": "integer" }
-      },
-      "required": ["uedo_uuid", "timestamp_utc", "target_master_hash", "sequence_frame_id"]
+        "uedo_uuid": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "timestamp_utc": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "target_master_hash": {
+          "type": "string",
+          "const": "A-77-DELTA-SHIELD-LOCKED"
+        },
+        "sequence_frame_id": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
     },
     "human_operator_vector": {
       "type": "object",
+      "unevaluatedProperties": false,
+      "required": [
+        "operator_id",
+        "skill_tree_tier",
+        "credential_token_b",
+        "macro_intent_code",
+        "human_ed25519_signature"
+      ],
       "properties": {
-        "operator_id": { "type": "string" },
-        "skill_tree_tier": { "type": "string" },
-        "credential_token_b": { "type": "string" },
-        "macro_intent_code": { "type": "string" },
-        "human_ed25519_signature": { "type": "string" }
-      },
-      "required": ["operator_id", "skill_tree_tier", "credential_token_b", "macro_intent_code"]
+        "operator_id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
+        },
+        "skill_tree_tier": {
+          "type": "string",
+          "enum": ["TIER_1", "TIER_2", "TIER_3", "TIER_4"]
+        },
+        "credential_token_b": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 256
+        },
+        "macro_intent_code": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        },
+        "human_ed25519_signature": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{128}$"
+        }
+      }
     },
     "ai_synthesis_vector": {
       "type": "object",
+      "unevaluatedProperties": false,
+      "required": [
+        "model_binary_hash",
+        "predicted_collision_probability"
+      ],
       "properties": {
-        "model_binary_hash": { "type": "string" },
-        "predicted_collision_probability": { "type": "number" },
-        "exergy_budget_kwh": { "type": "number" }
-      },
-      "required": ["model_binary_hash", "predicted_collision_probability"]
+        "model_binary_hash": {
+          "type": "string",
+          "pattern": "^[a-fA-F0-9]{64}$"
+        },
+        "predicted_collision_probability": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0
+        },
+        "exergy_budget_kwh": {
+          "type": "number",
+          "minimum": 0.0
+        }
+      }
     },
     "control_plane_gate": {
       "type": "object",
+      "unevaluatedProperties": false,
+      "required": [
+        "posix_dominance_state",
+        "cops_maintenance_cost",
+        "fixed_precision_digits"
+      ],
       "properties": {
-        "posix_dominance_state": { "type": "string" },
-        "cops_maintenance_cost": { "type": "integer", "const": 0 },
-        "fixed_precision_digits": { "type": "integer", "const": 8 }
-      },
-      "required": ["posix_dominance_state", "cops_maintenance_cost", "fixed_precision_digits"]
+        "posix_dominance_state": {
+          "type": "string",
+          "enum": [
+            "POSIX_0_PASS",
+            "POSIX_10_FREEZE",
+            "POSIX_12_PWC",
+            "POSIX_30_CORRUPT",
+            "POSIX_32_REFUSAL",
+            "POSIX_40_BREACH"
+          ]
+        },
+        "cops_maintenance_cost": {
+          "type": "integer",
+          "const": 0
+        },
+        "fixed_precision_digits": {
+          "type": "integer",
+          "const": 8
+        }
+      }
     }
-  },
-  "required": ["header", "human_operator_vector", "ai_synthesis_vector", "control_plane_gate"]
+  }
 }
