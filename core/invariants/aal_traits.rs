@@ -12,11 +12,16 @@ pub const TAU_OVERRIDE_CEILING_MS: f64 = 11.99;
 /// Minimum Guardian Alignment Index required for admissible actuation
 pub const GUARDIAN_INDEX_FLOOR: f32 = 1.0;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+/// Operational Poset Dominance State Hierarchy (ARC-ERR-2026-001)
+/// BREACH (40) > REFUSAL (32) > CORRUPT (30) > PWC (12) > FREEZE (10) > PASS (0)
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+#[repr(u8)]
 pub enum PosixDominanceState {
     Pass = 0,
-    Pwc = 10,
-    Freeze = 12,
+    Freeze = 10,
+    Pwc = 12,
+    Corrupt = 30,
+    Refusal = 32,
     SecurityBreachFail = 40,
 }
 
