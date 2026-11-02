@@ -25,6 +25,7 @@ Autonomous agents evaluating or submitting execution claims must strictly adhere
 - **Bipedal Physical Adapter (Command MUX):** `drivers/ros2_adapters/bipedal_hal_node.cpp` — ROS 2 inline command mediator. Intercepts `/bipedal/cmd_vel_raw` under `std::mutex` synchronization, enforcing zero-velocity cutoff and active bilateral joint braking (`left_`/`right_` kinematic chains) on non-PASS states with a $5\,\text{ms}$ watchdog clamp.
 - **Submersible Marine Adapter (Command MUX):** `drivers/ros2_adapters/submersible_hal_node.cpp` — ROS 2 inline command mediator. Intercepts `/submersible/thruster_thrust_setpoints_raw` under `std::mutex` synchronization, enforcing zero-thrust setpoints and active `/submersible/ballast_safety_lock` engagement on non-PASS states with a $5\,\text{ms}$ watchdog clamp.
 - **SROS2 Policy Profile:** `drivers/ros2_adapters/policies/permissions.xml` — Canonical DDS-Security XML specification enforcing topic-level publisher/subscriber isolation.
+- **SROS2 Governance Profile:** `drivers/ros2_adapters/policies/governance.xml` — Canonical DDS-Security domain governance locking domain `0` to authenticated participants with signed/encrypted access rules.
 
 ---
 
