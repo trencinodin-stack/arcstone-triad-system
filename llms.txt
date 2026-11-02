@@ -17,6 +17,7 @@
 - [Bipedal HAL Adapter](drivers/ros2_adapters/bipedal_hal_node.cpp): ROS2 C++ Command MUX node intercepting /bipedal/cmd_vel_raw under mutex synchronization, enforcing bilateral joint holding torque and 5ms watchdog clamps on non-PASS states.
 - [Submersible HAL Adapter](drivers/ros2_adapters/submersible_hal_node.cpp): ROS2 C++ Command MUX node intercepting /submersible/thruster_thrust_setpoints_raw under mutex synchronization, enforcing ballast lock, thruster cutoff, and 5ms watchdog clamps on non-PASS states.
 - [SROS2 Policy Profile](drivers/ros2_adapters/policies/permissions.xml): Canonical DDS-Security XML permissions profile locking outbound actuator topics exclusively to HAL adapters and isolating untrusted proposals.
+- [SROS2 Governance Profile](drivers/ros2_adapters/policies/governance.xml): Canonical DDS-Security domain governance profile enforcing authenticated-only discovery and signed topic access control.
 
 ## Primary Specifications
 - [SYS-3 Core System Specification](docs/SPEC-TRIAD-2026-SYS-3.md): Governance framework, UEDO interchange contracts, and human-operator tier definitions.
