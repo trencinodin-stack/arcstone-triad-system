@@ -9,18 +9,17 @@
 #define SEC(NAME) __attribute__((section(NAME), used))
 
 #define MAX_PAYLOAD_SIZE 4096
-#define POSIX_PASS 0
-#define POSIX_FAIL 40
+#define BPF_DROP 0
 
 SEC("socket_uedo_filter")
 int filter_uedo_packets(struct __sk_buff *skb) {
-    // Enforce strict 4096-byte hardware static payload boundary
+    // Enforce strict 4096-byte hardware static payload boundary (S_max <= 4096B)
     if (skb->len > MAX_PAYLOAD_SIZE) {
-        return POSIX_FAIL; // Drop packet at NIC driver layer
+        return BPF_DROP; // Drop packet at ingress boundary
     }
 
-    // Pass valid frames to PREEMPT_RT kernel boundary
-    return POSIX_PASS;
+    // Pass valid frames (retain full skb->len) to PREEMPT_RT kernel boundary
+    return skb->len;
 }
 
 char _license[] SEC("license") = "GPL";
