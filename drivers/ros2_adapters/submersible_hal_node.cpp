@@ -7,6 +7,8 @@
 #include <chrono>
 #include <memory>
 #include <string>
+#include <regex>
+#include <atomic>
 
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/string.hpp"
@@ -53,25 +55,25 @@ public:
 
 private:
     void on_uedo_frame(const std_msgs::msg::String::SharedPtr msg) {
-        // If a security breach was previously latched, reject execution until hard reboot
-        if (latched_breach_) {
+        // 1. If security breach was previously latched, synchronously enforce hold and return
+        if (latched_breach_.load()) {
             neutral_buoyancy_safe_hold(PosixDominanceState::POSIX_40_BREACH);
             return;
         }
 
-        // Strict lattice dominance resolution (Supremum over L)
+        // 2. Strict lattice dominance resolution with exact key-value isolation
         PosixDominanceState dominance = resolve_dominance_precedence(msg->data);
 
         if (dominance == PosixDominanceState::POSIX_0_PASS) {
             // Authorized state transition
-            thrusters_locked_ = false;
+            thrusters_locked_.store(false);
             last_valid_heartbeat_ = this->now();
             RCLCPP_DEBUG(this->get_logger(), "UEDO PASS: Marine thruster bus clear.");
         } else {
-            if (dominance == PosixDominanceState::POSIX_40_BREACH) {
-                latched_breach_ = true; // Permanent latch on security breach
+            if (dominance == PosixDominanceState::POSIX_40_BREACH || dominance == PosixDominanceState::POSIX_32_REFUSAL) {
+                latched_breach_.store(true); // Permanent latch on breach or refusal
             }
-            // Strict Invariant Enforcement: I_1 (D(a) != PASS => Delta_external = 0)
+            // Strict Invariant Enforcement: Synchronous instant physical clamp on DENY
             neutral_buoyancy_safe_hold(dominance);
         }
     }
@@ -85,7 +87,7 @@ private:
     }
 
     void neutral_buoyancy_safe_hold(PosixDominanceState state) {
-        thrusters_locked_ = true;
+        thrusters_locked_.store(true);
 
         // 1. Actuator Neutralization: Command zero thrust setpoints across all 8 vectored thrusters
         std_msgs::msg::Float64MultiArray zero_thrust;
@@ -102,20 +104,28 @@ private:
             "Fail-Closed Active: Thrusters zeroed. Ballast locked. Dominance state: %d", static_cast<int>(state));
     }
 
-    // Evaluates strict poset dominance hierarchy: BREACH > REFUSAL > CORRUPT > PWC > FREEZE > PASS
+    // Evaluates strict poset dominance hierarchy against exact field boundaries
     PosixDominanceState resolve_dominance_precedence(const std::string& payload) {
         // Enforce presence of control_plane_gate boundary
         if (payload.find("control_plane_gate") == std::string::npos) {
             return PosixDominanceState::POSIX_30_CORRUPT;
         }
 
-        // Evaluate from highest severity down to prevent bypass injection
-        if (payload.find("POSIX_40_BREACH") != std::string::npos) return PosixDominanceState::POSIX_40_BREACH;
-        if (payload.find("POSIX_32_REFUSAL") != std::string::npos) return PosixDominanceState::POSIX_32_REFUSAL;
-        if (payload.find("POSIX_30_CORRUPT") != std::string::npos) return PosixDominanceState::POSIX_30_CORRUPT;
-        if (payload.find("POSIX_12_PWC") != std::string::npos) return PosixDominanceState::POSIX_12_PWC;
-        if (payload.find("POSIX_10_FREEZE") != std::string::npos) return PosixDominanceState::POSIX_10_FREEZE;
-        if (payload.find("POSIX_0_PASS") != std::string::npos) return PosixDominanceState::POSIX_0_PASS;
+        // Match exact JSON key-value pattern: "posix_dominance_state": "<STATE>"
+        // Evaluated strictly from highest severity down
+        static const std::regex breach_rx(R"re("posix_dominance_state"\s*:\s*"POSIX_40_BREACH")re");
+        static const std::regex refusal_rx(R"re("posix_dominance_state"\s*:\s*"POSIX_32_REFUSAL")re");
+        static const std::regex corrupt_rx(R"re("posix_dominance_state"\s*:\s*"POSIX_30_CORRUPT")re");
+        static const std::regex pwc_rx(R"re("posix_dominance_state"\s*:\s*"POSIX_12_PWC")re");
+        static const std::regex freeze_rx(R"re("posix_dominance_state"\s*:\s*"POSIX_10_FREEZE")re");
+        static const std::regex pass_rx(R"re("posix_dominance_state"\s*:\s*"POSIX_0_PASS")re");
+
+        if (std::regex_search(payload, breach_rx))  return PosixDominanceState::POSIX_40_BREACH;
+        if (std::regex_search(payload, refusal_rx)) return PosixDominanceState::POSIX_32_REFUSAL;
+        if (std::regex_search(payload, corrupt_rx)) return PosixDominanceState::POSIX_30_CORRUPT;
+        if (std::regex_search(payload, pwc_rx))     return PosixDominanceState::POSIX_12_PWC;
+        if (std::regex_search(payload, freeze_rx))  return PosixDominanceState::POSIX_10_FREEZE;
+        if (std::regex_search(payload, pass_rx))    return PosixDominanceState::POSIX_0_PASS;
 
         return PosixDominanceState::UNSPECIFIED;
     }
@@ -125,8 +135,8 @@ private:
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr ballast_lock_pub_;
     rclcpp::TimerBase::SharedPtr watchdog_timer_;
     rclcpp::Time last_valid_heartbeat_;
-    bool thrusters_locked_;
-    bool latched_breach_;
+    std::atomic<bool> thrusters_locked_;
+    std::atomic<bool> latched_breach_;
 };
 
 int main(int argc, char** argv) {
