@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+     xsi:noNamespaceSchemaLocation="http://www.omg.org/spec/DDS-SECURITY/20170801/omg_shared_ca_permissions.xsd">
+  <permissions>
+    <!-- Policy Grant for Bipedal HAL Adapter -->
+    <grant name="bipedal_hal_node_grant">
+      <subject_name>/CN=bipedal_hal_node</subject_name>
+      <validity>
+        <not_before>2026-01-01T00:00:00</not_before>
+        <not_after>2036-01-01T00:00:00</not_after>
+      </validity>
+      <rules>
+        <!-- Exclusive physical outbound bus: only bipedal_hal_node may publish here -->
+        <publish>
+          <topics>
+            <topic>/bipedal/cmd_vel</topic>
+            <topic>/bipedal/joint_targets</topic>
+          </topics>
+        </publish>
+        <!-- Ingress channels: decisions and unverified raw proposals -->
+        <subscribe>
+          <topics>
+            <topic>/arcstone/uedo_decision</topic>
+            <topic>/bipedal/cmd_vel_raw</topic>
+          </topics>
+        </subscribe>
+      </rules>
+      <default>DENY</default>
+    </grant>
+
+    <!-- Policy Grant for Submersible HAL Adapter -->
+    <grant name="submersible_hal_node_grant">
+      <subject_name>/CN=submersible_hal_node</subject_name>
+      <validity>
+        <not_before>2026-01-01T00:00:00</not_before>
+        <not_after>2036-01-01T00:00:00</not_after>
+      </validity>
+      <rules>
+        <!-- Exclusive physical marine bus: only submersible_hal_node may publish here -->
+        <publish>
+          <topics>
+            <topic>/submersible/thruster_thrust_setpoints</topic>
+            <topic>/submersible/ballast_safety_lock</topic>
+          </topics>
+        </publish>
+        <!-- Ingress channels: marine decisions and unverified raw thrust proposals -->
+        <subscribe>
+          <topics>
+            <topic>/arcstone/uedo_submersible_decision</topic>
+            <topic>/submersible/thruster_thrust_setpoints_raw</topic>
+          </topics>
+        </subscribe>
+      </rules>
+      <default>DENY</default>
+    </grant>
+
+    <!-- Unprivileged Autonomous Agent / Planner Profile -->
+    <grant name="untrusted_agent_grant">
+      <subject_name>/CN=autonomous_planner</subject_name>
+      <validity>
+        <not_before>2026-01-01T00:00:00</not_before>
+        <not_after>2036-01-01T00:00:00</not_after>
+      </validity>
+      <rules>
+        <!-- Untrusted agents CANNOT publish to /bipedal/cmd_vel or thrusters -->
+        <publish>
+          <topics>
+            <topic>/bipedal/cmd_vel_raw</topic>
+            <topic>/submersible/thruster_thrust_setpoints_raw</topic>
+          </topics>
+        </publish>
+      </rules>
+      <default>DENY</default>
+    </grant>
+  </permissions>
+</dds>
