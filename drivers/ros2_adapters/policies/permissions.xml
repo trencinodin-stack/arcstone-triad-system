@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <dds xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-     xsi:noNamespaceSchemaLocation="http://www.omg.org/spec/DDS-SECURITY/20170801/omg_shared_ca_permissions.xsd">
+     xsi:noNamespaceSchemaLocation="https://www.omg.org/spec/DDS-SECURITY/20170901/omg_shared_ca_permissions.xsd">
   <permissions>
 
     <!-- 1. Bipedal HAL Adapter Grant -->
@@ -10,26 +10,27 @@
         <not_before>2026-01-01T00:00:00</not_before>
         <not_after>2036-01-01T00:00:00</not_after>
       </validity>
-      <rules>
+      <allow_rule>
         <domains>
           <id>0</id>
         </domains>
-        <allow_rule>
-          <publish>
-            <topics>
-              <topic>rt/bipedal/cmd_vel</topic>
-              <topic>rt/bipedal/joint_targets</topic>
-            </topics>
-          </publish>
-          <subscribe>
-            <topics>
-              <topic>rt/arcstone/uedo_decision</topic>
-              <topic>rt/bipedal/cmd_vel_raw</topic>
-            </topics>
-          </subscribe>
-        </allow_rule>
-        <default>DENY</default>
-      </rules>
+        <publish>
+          <topics>
+            <topic>rt/bipedal/cmd_vel</topic>
+            <topic>rt/bipedal/joint_targets</topic>
+            <topic>rt/rosout</topic>
+            <topic>rt/parameter_events</topic>
+          </topics>
+        </publish>
+        <subscribe>
+          <topics>
+            <topic>rt/arcstone/uedo_decision</topic>
+            <topic>rt/bipedal/cmd_vel_raw</topic>
+            <topic>rt/parameter_events</topic>
+          </topics>
+        </subscribe>
+      </allow_rule>
+      <default>DENY</default>
     </grant>
 
     <!-- 2. Submersible HAL Adapter Grant -->
@@ -39,26 +40,27 @@
         <not_before>2026-01-01T00:00:00</not_before>
         <not_after>2036-01-01T00:00:00</not_after>
       </validity>
-      <rules>
+      <allow_rule>
         <domains>
           <id>0</id>
         </domains>
-        <allow_rule>
-          <publish>
-            <topics>
-              <topic>rt/submersible/thruster_thrust_setpoints</topic>
-              <topic>rt/submersible/ballast_safety_lock</topic>
-            </topics>
-          </publish>
-          <subscribe>
-            <topics>
-              <topic>rt/arcstone/uedo_submersible_decision</topic>
-              <topic>rt/submersible/thruster_thrust_setpoints_raw</topic>
-            </topics>
-          </subscribe>
-        </allow_rule>
-        <default>DENY</default>
-      </rules>
+        <publish>
+          <topics>
+            <topic>rt/submersible/thruster_thrust_setpoints</topic>
+            <topic>rt/submersible/ballast_safety_lock</topic>
+            <topic>rt/rosout</topic>
+            <topic>rt/parameter_events</topic>
+          </topics>
+        </publish>
+        <subscribe>
+          <topics>
+            <topic>rt/arcstone/uedo_submersible_decision</topic>
+            <topic>rt/submersible/thruster_thrust_setpoints_raw</topic>
+            <topic>rt/parameter_events</topic>
+          </topics>
+        </subscribe>
+      </allow_rule>
+      <default>DENY</default>
     </grant>
 
     <!-- 3. Authorized Control-Plane Decision Publisher Grant -->
@@ -68,20 +70,25 @@
         <not_before>2026-01-01T00:00:00</not_before>
         <not_after>2036-01-01T00:00:00</not_after>
       </validity>
-      <rules>
+      <allow_rule>
         <domains>
           <id>0</id>
         </domains>
-        <allow_rule>
-          <publish>
-            <topics>
-              <topic>rt/arcstone/uedo_decision</topic>
-              <topic>rt/arcstone/uedo_submersible_decision</topic>
-            </topics>
-          </publish>
-        </allow_rule>
-        <default>DENY</default>
-      </rules>
+        <publish>
+          <topics>
+            <topic>rt/arcstone/uedo_decision</topic>
+            <topic>rt/arcstone/uedo_submersible_decision</topic>
+            <topic>rt/rosout</topic>
+            <topic>rt/parameter_events</topic>
+          </topics>
+        </publish>
+        <subscribe>
+          <topics>
+            <topic>rt/parameter_events</topic>
+          </topics>
+        </subscribe>
+      </allow_rule>
+      <default>DENY</default>
     </grant>
 
     <!-- 4. Untrusted Autonomous Agent / Planner Grant -->
@@ -91,21 +98,26 @@
         <not_before>2026-01-01T00:00:00</not_before>
         <not_after>2036-01-01T00:00:00</not_after>
       </validity>
-      <rules>
+      <allow_rule>
         <domains>
           <id>0</id>
         </domains>
-        <allow_rule>
+        <publish>
           <!-- Gated exclusively to unprivileged raw proposal topics -->
-          <publish>
-            <topics>
-              <topic>rt/bipedal/cmd_vel_raw</topic>
-              <topic>rt/submersible/thruster_thrust_setpoints_raw</topic>
-            </topics>
-          </publish>
-        </allow_rule>
-        <default>DENY</default>
-      </rules>
+          <topics>
+            <topic>rt/bipedal/cmd_vel_raw</topic>
+            <topic>rt/submersible/thruster_thrust_setpoints_raw</topic>
+            <topic>rt/rosout</topic>
+            <topic>rt/parameter_events</topic>
+          </topics>
+        </publish>
+        <subscribe>
+          <topics>
+            <topic>rt/parameter_events</topic>
+          </topics>
+        </subscribe>
+      </allow_rule>
+      <default>DENY</default>
     </grant>
 
   </permissions>
