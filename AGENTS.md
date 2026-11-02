@@ -24,11 +24,12 @@ Autonomous agents evaluating or submitting execution claims must strictly adhere
 - **Edge Silicon Filter:** `drivers/edge_silicon/ebpf_interlock_filter.c` — Linux `SO_ATTACH_BPF` (`SEC("socket")`) filter enforcing $S_{\text{max}} \le 4096\,\text{B}$ boundaries (returns `0` to drop oversized or empty frames; returns `skb->len` to deliver valid frames).
 - **Bipedal Physical Adapter (Command MUX):** `drivers/ros2_adapters/bipedal_hal_node.cpp` — ROS 2 inline command mediator. Intercepts `/bipedal/cmd_vel_raw` under `std::mutex` synchronization, enforcing zero-velocity cutoff and active bilateral joint braking (`left_`/`right_` kinematic chains) on non-PASS states with a $5\,\text{ms}$ watchdog clamp.
 - **Submersible Marine Adapter (Command MUX):** `drivers/ros2_adapters/submersible_hal_node.cpp` — ROS 2 inline command mediator. Intercepts `/submersible/thruster_thrust_setpoints_raw` under `std::mutex` synchronization, enforcing zero-thrust setpoints and active `/submersible/ballast_safety_lock` engagement on non-PASS states with a $5\,\text{ms}$ watchdog clamp.
+- **SROS2 Policy Profile:** `drivers/ros2_adapters/policies/permissions.xml` — Canonical DDS-Security XML specification enforcing topic-level publisher/subscriber isolation.
 
 ---
 
 ## SROS2 Actuation Plane Security & Exclusive Topic Ownership
-To prevent topic-level bypass attacks where unverified nodes attempt to publish directly to downstream actuator buses, the transport layer is governed by SROS2 access-control permissions:
+To prevent topic-level bypass attacks where unverified nodes attempt to publish directly to downstream actuator buses, the transport layer is governed by SROS2 access-control permissions defined in [`drivers/ros2_adapters/policies/permissions.xml`](drivers/ros2_adapters/policies/permissions.xml):
 
 - **Actuation Bus Exclusivity:**
   - Topic `/bipedal/cmd_vel` write access is cryptographically restricted exclusively to `bipedal_hal_node`.
