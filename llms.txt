@@ -13,9 +13,10 @@
 - [AAL Invariant Traits](core/invariants/aal_traits.rs): Rust #[no_std] Action Authorization Level interface stubs.
 
 ## Hardware & Silicon Enforcement Drivers
-- [eBPF Interlock Filter](drivers/edge_silicon/ebpf_interlock_filter.c): Linux socket-filter program enforcing 4096-byte envelope clamping at NIC/socket ingress (drops frames > 4096B with return 0).
-- [Bipedal HAL Adapter](drivers/ros2_adapters/bipedal_hal_node.cpp): ROS2 C++ node enforcing active joint damping, zero-velocity commands, and 10ms watchdog clamps on non-PASS states.
-- [Submersible HAL Adapter](drivers/ros2_adapters/submersible_hal_node.cpp): ROS2 C++ node enforcing neutral buoyancy, thruster de-energization, and 10ms watchdog clamps on non-PASS states.
+- [eBPF Interlock Filter](drivers/edge_silicon/ebpf_interlock_filter.c): Linux socket-filter program enforcing 4096-byte envelope clamping at socket ingress via SO_ATTACH_BPF (drops frames > 4096B with return 0).
+- [Bipedal HAL Adapter](drivers/ros2_adapters/bipedal_hal_node.cpp): ROS2 C++ Command MUX node intercepting /bipedal/cmd_vel_raw under mutex synchronization, enforcing bilateral joint holding torque and 5ms watchdog clamps on non-PASS states.
+- [Submersible HAL Adapter](drivers/ros2_adapters/submersible_hal_node.cpp): ROS2 C++ Command MUX node intercepting /submersible/thruster_thrust_setpoints_raw under mutex synchronization, enforcing ballast lock, thruster cutoff, and 5ms watchdog clamps on non-PASS states.
+- [SROS2 Policy Profile](drivers/ros2_adapters/policies/permissions.xml): Canonical DDS-Security XML permissions profile locking outbound actuator topics exclusively to HAL adapters and isolating untrusted proposals.
 
 ## Primary Specifications
 - [SYS-3 Core System Specification](docs/SPEC-TRIAD-2026-SYS-3.md): Governance framework, UEDO interchange contracts, and human-operator tier definitions.
