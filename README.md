@@ -28,6 +28,7 @@ All intent, proposals, and execution vectors exchanged across the system are ser
   - `drivers/edge_silicon/ebpf_interlock_filter.c`: In-kernel eBPF packet interlock enforcing static buffer envelopes ($S_{\max} \le 4096\,\text{B}$) at the socket boundary via `SO_ATTACH_BPF`.
   - `drivers/ros2_adapters/bipedal_hal_node.cpp`: ROS 2 inline Command MUX node intercepting `/bipedal/cmd_vel_raw` under `std::mutex` synchronization, enforcing active joint-damping holding torque and zero-velocity publication on non-PASS states.
   - `drivers/ros2_adapters/submersible_hal_node.cpp`: ROS 2 inline Command MUX node intercepting `/submersible/thruster_thrust_setpoints_raw` under `std::mutex` synchronization, enforcing neutral buoyancy ballast safety locks and thruster cutoffs under extreme marine pressure envelopes.
+  - `drivers/ros2_adapters/policies/permissions.xml`: Canonical SROS2 / DDS-Security permissions profile enforcing exclusive topic write privileges and untrusted proposal ingress isolation.
 - `docs/` — Sovereign Specification Suite (`SYS-3`, `RANK-01`, `DEFENSE-01`, `FRONTIER-01`, `RECOVERY-01`, `TRISIGHT-01`, `COUNCIL-01`, `ARCHITECT-01`).
 - `machine/` — Machine Discovery Manifests (`system-manifest.json`, `repo-policy.json`, `protocol.json`).
 - `progression/` — Somatic ledger (`somatic_life_counter.rs`) and operator capability trees (`operator_classes.json`, `tier_domain_unlocks.json`).
@@ -69,7 +70,7 @@ drivers/edge_silicon & drivers/ros2_adapters
 
 ## SROS2 Actuation Plane Security & Exclusive Topic Ownership
 
-To ensure that the Command MUX cannot be bypassed by unauthorized ROS 2 participants operating on the same network domain, the hardware actuation plane is protected by SROS2 (Secure ROS 2) access-control profiles:
+To ensure that the Command MUX cannot be bypassed by unauthorized ROS 2 participants operating on the same network domain, the hardware actuation plane is protected by SROS2 (Secure ROS 2) access-control profiles defined in [`drivers/ros2_adapters/policies/permissions.xml`](https://www.google.com/search?q=drivers/ros2_adapters/policies/permissions.xml):
 
 - **Actuation Bus Exclusivity:** Outbound motor-control topics (`/bipedal/cmd_vel`, `/bipedal/joint_targets`, `/submersible/thruster_thrust_setpoints`, `/submersible/ballast_safety_lock`) cryptographically restrict publish permissions exclusively to the authorized HAL node identities (`bipedal_hal_node`, `submersible_hal_node`).
 - **Untrusted Ingress Restriction:** Autonomous planning nodes, LLM agent interfaces, and external teleoperation bridges are restricted to publishing only to raw proposal topics (`/bipedal/cmd_vel_raw`, `/submersible/thruster_thrust_setpoints_raw`).
