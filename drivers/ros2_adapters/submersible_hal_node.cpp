@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 #include <regex>
+#include <mutex>
 #include <atomic>
 
 #include "rclcpp/rclcpp.hpp"
@@ -15,7 +16,6 @@
 #include "std_msgs/msg/float64_multi_array.hpp"
 #include "std_msgs/msg/bool.hpp"
 
-// Canonical Dominance Enum (Matches uedo.proto and ARC-ERR-2026-001)
 enum class PosixDominanceState {
     UNSPECIFIED = 0,
     POSIX_0_PASS = 1,
@@ -33,12 +33,17 @@ public:
           thrusters_locked_(true), 
           latched_breach_(false) 
     {
-        // Ingress subscriber for incoming UEDO decision stream
+        // 1. Ingress Decision Channel
         uedo_sub_ = this->create_subscription<std_msgs::msg::String>(
             "/arcstone/uedo_submersible_decision", 10,
             std::bind(&SubmersibleHalNode::on_uedo_frame, this, std::placeholders::_1));
 
-        // Actuator command publishers (Physical Marine Plane)
+        // 2. Untrusted Ingress Thruster Channel (Raw proposal from autonomous systems)
+        raw_thrust_sub_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
+            "/submersible/thruster_thrust_setpoints_raw", 10,
+            std::bind(&SubmersibleHalNode::on_raw_thrust_proposal, this, std::placeholders::_1));
+
+        // 3. Physical Marine Plane (Exclusive outbound driver bus)
         thruster_cmd_pub_ = this->create_publisher<std_msgs::msg::Float64MultiArray>(
             "/submersible/thruster_thrust_setpoints", 1);
         ballast_lock_pub_ = this->create_publisher<std_msgs::msg::Bool>(
@@ -54,47 +59,56 @@ public:
     }
 
 private:
+    // Synchronous Ingress Gate: Mediates untrusted thruster setpoints
+    void on_raw_thrust_proposal(const std_msgs::msg::Float64MultiArray::SharedPtr msg) {
+        std::lock_guard<std::mutex> lock(state_mutex_);
+        if (thrusters_locked_ || latched_breach_) {
+            // Invariant I_1: D(a) = DENY => Delta_external = 0 (Drop raw proposal immediately)
+            return;
+        }
+        // Exclusively forward verified commands to the physical thruster bus
+        thruster_cmd_pub_->publish(*msg);
+    }
+
     void on_uedo_frame(const std_msgs::msg::String::SharedPtr msg) {
-        // 1. If security breach was previously latched, synchronously enforce hold and return
-        if (latched_breach_.load()) {
-            neutral_buoyancy_safe_hold(PosixDominanceState::POSIX_40_BREACH);
+        std::lock_guard<std::mutex> lock(state_mutex_);
+
+        if (latched_breach_) {
+            neutral_buoyancy_safe_hold_locked(PosixDominanceState::POSIX_40_BREACH);
             return;
         }
 
-        // 2. Strict lattice dominance resolution with exact key-value isolation
         PosixDominanceState dominance = resolve_dominance_precedence(msg->data);
 
         if (dominance == PosixDominanceState::POSIX_0_PASS) {
-            // Authorized state transition
-            thrusters_locked_.store(false);
+            thrusters_locked_ = false;
             last_valid_heartbeat_ = this->now();
             RCLCPP_DEBUG(this->get_logger(), "UEDO PASS: Marine thruster bus clear.");
         } else {
             if (dominance == PosixDominanceState::POSIX_40_BREACH || dominance == PosixDominanceState::POSIX_32_REFUSAL) {
-                latched_breach_.store(true); // Permanent latch on breach or refusal
+                latched_breach_ = true;
             }
-            // Strict Invariant Enforcement: Synchronous instant physical clamp on DENY
-            neutral_buoyancy_safe_hold(dominance);
+            neutral_buoyancy_safe_hold_locked(dominance);
         }
     }
 
     void check_execution_timeout() {
-        // Watchdog clamp: If decision outlives temporal ceiling (tau_override <= 11.99ms)
+        std::lock_guard<std::mutex> lock(state_mutex_);
         auto elapsed_ms = (this->now() - last_valid_heartbeat_).nanoseconds() / 1'000'000.0;
         if (elapsed_ms > 11.99) {
-            neutral_buoyancy_safe_hold(PosixDominanceState::POSIX_10_FREEZE);
+            neutral_buoyancy_safe_hold_locked(PosixDominanceState::POSIX_10_FREEZE);
         }
     }
 
-    void neutral_buoyancy_safe_hold(PosixDominanceState state) {
-        thrusters_locked_.store(true);
+    void neutral_buoyancy_safe_hold_locked(PosixDominanceState state) {
+        thrusters_locked_ = true;
 
-        // 1. Actuator Neutralization: Command zero thrust setpoints across all 8 vectored thrusters
+        // 1. Actuator Neutralization: Zero command thrust setpoints across all 8 thrusters
         std_msgs::msg::Float64MultiArray zero_thrust;
         zero_thrust.data = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
         thruster_cmd_pub_->publish(zero_thrust);
 
-        // 2. Buoyancy Hold: Engage electro-hydraulic ballast lock to seal pressure hull displacement
+        // 2. Buoyancy Hold: Engage electro-hydraulic ballast lock
         std_msgs::msg::Bool ballast_lock;
         ballast_lock.data = true;
         ballast_lock_pub_->publish(ballast_lock);
@@ -104,15 +118,11 @@ private:
             "Fail-Closed Active: Thrusters zeroed. Ballast locked. Dominance state: %d", static_cast<int>(state));
     }
 
-    // Evaluates strict poset dominance hierarchy against exact field boundaries
     PosixDominanceState resolve_dominance_precedence(const std::string& payload) {
-        // Enforce presence of control_plane_gate boundary
         if (payload.find("control_plane_gate") == std::string::npos) {
             return PosixDominanceState::POSIX_30_CORRUPT;
         }
 
-        // Match exact JSON key-value pattern: "posix_dominance_state": "<STATE>"
-        // Evaluated strictly from highest severity down
         static const std::regex breach_rx(R"re("posix_dominance_state"\s*:\s*"POSIX_40_BREACH")re");
         static const std::regex refusal_rx(R"re("posix_dominance_state"\s*:\s*"POSIX_32_REFUSAL")re");
         static const std::regex corrupt_rx(R"re("posix_dominance_state"\s*:\s*"POSIX_30_CORRUPT")re");
@@ -131,12 +141,15 @@ private:
     }
 
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr uedo_sub_;
+    rclcpp::Subscription<std_msgs::msg::Float64MultiArray>::SharedPtr raw_thrust_sub_;
     rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr thruster_cmd_pub_;
     rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr ballast_lock_pub_;
     rclcpp::TimerBase::SharedPtr watchdog_timer_;
     rclcpp::Time last_valid_heartbeat_;
-    std::atomic<bool> thrusters_locked_;
-    std::atomic<bool> latched_breach_;
+    
+    std::mutex state_mutex_;
+    bool thrusters_locked_;
+    bool latched_breach_;
 };
 
 int main(int argc, char** argv) {
