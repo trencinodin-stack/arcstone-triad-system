@@ -36,6 +36,10 @@ It defines the sovereign governance framework, fail-closed admissibility gates, 
 
 ---
 
-## Bridge to Upstream Kernel
+## Ecosystem Cross-Repository Alignment
 
-This repository contains non-proprietary public specifications and abstraction interfaces. Bare-metal kernel state-machine logic resides inside `arcstone-continuity-core`.
+- **Upstream Protocol Specification:** [`arcstone-spec-epistemic-01`](https://github.com/trencinodin-stack/arcstone-spec-epistemic-01) (`v1.3.1-LOCKED`) — Master normative ENP protocol contracts.
+- **Reference Substrate Execution:** [`arcstone-continuity-core`](https://github.com/trencinodin-stack/arcstone-continuity-core) (`v1.3.1-exec`) — Path A bare-metal kernel and zero-allocation execution engine.
+- **Executable Reference Benchmark:** [`autodidactic-credential-sovereignty`](https://github.com/trencinodin-stack/autodidactic-credential-sovereignty) (`v1.0.0-immutable`) — Coq formal proofs (`Print Assumptions ≡ ∅`), bare-metal test harness, and Groth16 zk-SNARK circuits.
+- **Execution Boundary Sidecar:** [`arcstone-mcp-sidecar`](https://github.com/trencinodin-stack/arcstone-mcp-sidecar) (`v0.1.0-canonical`) — Reference MCP boundary enforcement proxy.
+- **Canonical Field Root:** [`admissibilityscience.com`](https://admissibilityscience.com/) — Epistemic citations and machine routing surface.
