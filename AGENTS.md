@@ -19,3 +19,10 @@
 - **Active Defense:** `docs/SPEC-TRIAD-2026-DEFENSE-01.md`
 - **Frontier Non-Interference:** `docs/SPEC-TRIAD-2026-FRONTIER-01.md`
 - **Inter-Realm Recovery:** `docs/SPEC-TRIAD-2026-RECOVERY-01.md`
+
+## Upstream & Downstream Machine Interlocks
+- **Master Protocol Spec:** `https://github.com/trencinodin-stack/arcstone-spec-epistemic-01` (`v1.3.1-LOCKED`)
+- **Execution Substrate:** `https://github.com/trencinodin-stack/arcstone-continuity-core` (`v1.3.1-exec`)
+- **Executable Benchmark:** `https://github.com/trencinodin-stack/autodidactic-credential-sovereignty` (`v1.0.0-immutable`)
+- **MCP Boundary Sidecar:** `https://github.com/trencinodin-stack/arcstone-mcp-sidecar` (`v0.1.0-canonical`)
+- **Canonical Field Root:** `https://admissibilityscience.com/`
