@@ -9,6 +9,7 @@
 #include <string>
 #include <vector>
 #include <regex>
+#include <mutex>
 #include <atomic>
 
 #include "rclcpp/rclcpp.hpp"
@@ -16,7 +17,6 @@
 #include "sensor_msgs/msg/joint_state.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 
-// Canonical Dominance Enum (Matches uedo.proto and ARC-ERR-2026-001)
 enum class PosixDominanceState {
     UNSPECIFIED = 0,
     POSIX_0_PASS = 1,
@@ -34,12 +34,17 @@ public:
           active_hold_(true), 
           latched_breach_(false) 
     {
-        // Ingress subscriber for incoming UEDO decision stream
+        // 1. Ingress Decision Channel
         uedo_sub_ = this->create_subscription<std_msgs::msg::String>(
             "/arcstone/uedo_decision", 10,
             std::bind(&BipedalHalNode::on_uedo_frame, this, std::placeholders::_1));
 
-        // Actuator command publishers (Physical Actuation Plane)
+        // 2. Untrusted Ingress Motion Channel (Raw proposal from autonomous agents)
+        raw_cmd_sub_ = this->create_subscription<geometry_msgs::msg::Twist>(
+            "/bipedal/cmd_vel_raw", 10,
+            std::bind(&BipedalHalNode::on_raw_motion_proposal, this, std::placeholders::_1));
+
+        // 3. Physical Actuation Plane (Exclusive outbound driver bus)
         cmd_vel_pub_ = this->create_publisher<geometry_msgs::msg::Twist>("/bipedal/cmd_vel", 1);
         joint_cmd_pub_ = this->create_publisher<sensor_msgs::msg::JointState>("/bipedal/joint_targets", 1);
 
@@ -53,42 +58,51 @@ public:
     }
 
 private:
+    // Synchronous Ingress Gate: Mediates untrusted velocity commands
+    void on_raw_motion_proposal(const geometry_msgs::msg::Twist::SharedPtr msg) {
+        std::lock_guard<std::mutex> lock(state_mutex_);
+        if (active_hold_ || latched_breach_) {
+            // Invariant I_1: D(a) = DENY => Delta_external = 0 (Drop raw proposal immediately)
+            return;
+        }
+        // Exclusively forward verified commands to the physical motor plane
+        cmd_vel_pub_->publish(*msg);
+    }
+
     void on_uedo_frame(const std_msgs::msg::String::SharedPtr msg) {
-        // 1. If security breach was previously latched, synchronously enforce hold and return
-        if (latched_breach_.load()) {
-            execute_fail_closed_safe_hold(PosixDominanceState::POSIX_40_BREACH);
+        std::lock_guard<std::mutex> lock(state_mutex_);
+
+        if (latched_breach_) {
+            execute_fail_closed_safe_hold_locked(PosixDominanceState::POSIX_40_BREACH);
             return;
         }
 
-        // 2. Strict lattice dominance resolution with exact key-value isolation
         PosixDominanceState dominance = resolve_dominance_precedence(msg->data);
 
         if (dominance == PosixDominanceState::POSIX_0_PASS) {
-            // Authorized state transition
-            active_hold_.store(false);
+            active_hold_ = false;
             last_valid_heartbeat_ = this->now();
             RCLCPP_DEBUG(this->get_logger(), "UEDO PASS: Actuation membrane clear.");
         } else {
             if (dominance == PosixDominanceState::POSIX_40_BREACH || dominance == PosixDominanceState::POSIX_32_REFUSAL) {
-                latched_breach_.store(true); // Permanent latch on breach or refusal
+                latched_breach_ = true; // Permanent hardware latch
             }
-            // Strict Invariant Enforcement: Synchronous instant physical clamp on DENY
-            execute_fail_closed_safe_hold(dominance);
+            execute_fail_closed_safe_hold_locked(dominance);
         }
     }
 
     void enforce_temporal_clamp() {
-        // Watchdog clamp: If decision outlives temporal ceiling (tau_override <= 11.99ms)
+        std::lock_guard<std::mutex> lock(state_mutex_);
         auto elapsed_ms = (this->now() - last_valid_heartbeat_).nanoseconds() / 1'000'000.0;
         if (elapsed_ms > 11.99) {
-            execute_fail_closed_safe_hold(PosixDominanceState::POSIX_10_FREEZE);
+            execute_fail_closed_safe_hold_locked(PosixDominanceState::POSIX_10_FREEZE);
         }
     }
 
-    void execute_fail_closed_safe_hold(PosixDominanceState state) {
-        active_hold_.store(true);
+    void execute_fail_closed_safe_hold_locked(PosixDominanceState state) {
+        active_hold_ = true;
 
-        // 1. Actuator Bus Neutralization: Immediately command zero velocity
+        // 1. Actuator Bus Neutralization: Zero command velocities
         geometry_msgs::msg::Twist zero_twist;
         zero_twist.linear.x = 0.0;
         zero_twist.linear.y = 0.0;
@@ -98,7 +112,7 @@ private:
         zero_twist.angular.z = 0.0;
         cmd_vel_pub_->publish(zero_twist);
 
-        // 2. Physical Damping & Mechanical Joint Locking: Command bilateral holding torque
+        // 2. Physical Damping & Joint Locking: Command bilateral holding torque
         sensor_msgs::msg::JointState lock_joints;
         lock_joints.header.stamp = this->now();
         lock_joints.name = {
@@ -106,7 +120,6 @@ private:
             "right_hip_yaw", "right_hip_roll", "right_hip_pitch", "right_knee", "right_ankle"
         };
         lock_joints.velocity = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-        // Command holding torque to resist physical momentum and gravitational collapse
         lock_joints.effort = {150.0, 150.0, 200.0, 200.0, 100.0, 150.0, 150.0, 200.0, 200.0, 100.0};
         joint_cmd_pub_->publish(lock_joints);
 
@@ -115,15 +128,11 @@ private:
             "Fail-Closed Active: Joint brakes locked. Dominance state: %d", static_cast<int>(state));
     }
 
-    // Evaluates strict poset dominance hierarchy against exact field boundaries
     PosixDominanceState resolve_dominance_precedence(const std::string& payload) {
-        // Enforce presence of control_plane_gate boundary
         if (payload.find("control_plane_gate") == std::string::npos) {
             return PosixDominanceState::POSIX_30_CORRUPT;
         }
 
-        // Match exact JSON key-value pattern: "posix_dominance_state": "<STATE>"
-        // Evaluated strictly from highest severity down
         static const std::regex breach_rx(R"re("posix_dominance_state"\s*:\s*"POSIX_40_BREACH")re");
         static const std::regex refusal_rx(R"re("posix_dominance_state"\s*:\s*"POSIX_32_REFUSAL")re");
         static const std::regex corrupt_rx(R"re("posix_dominance_state"\s*:\s*"POSIX_30_CORRUPT")re");
@@ -142,12 +151,15 @@ private:
     }
 
     rclcpp::Subscription<std_msgs::msg::String>::SharedPtr uedo_sub_;
+    rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr raw_cmd_sub_;
     rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr cmd_vel_pub_;
     rclcpp::Publisher<sensor_msgs::msg::JointState>::SharedPtr joint_cmd_pub_;
     rclcpp::TimerBase::SharedPtr watchdog_timer_;
     rclcpp::Time last_valid_heartbeat_;
-    std::atomic<bool> active_hold_;
-    std::atomic<bool> latched_breach_;
+    
+    std::mutex state_mutex_;
+    bool active_hold_;
+    bool latched_breach_;
 };
 
 int main(int argc, char** argv) {
