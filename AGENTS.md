@@ -3,8 +3,9 @@
 
 ## System Invariants & Admissibility Membrane
 - **Core Safety Invariant ($I_1$):** $D(a) = \text{DENY} \implies \Delta_{\text{external}}(a) = 0$ (Autonomous producers possess zero ambient physical authority).
+- **Command Gate Formulation ($I_1$):** $\text{Gate}(a) = \text{DENY} \implies \text{Command}_{\text{actuator}} = \mathbf{0}$ (Deterministic software command suppression backed by bilateral holding torque / ballast seals).
 - **Memory Boundary:** $S_{\text{max}} \le 4096\text{ Bytes}$ (`core/uedo/uedo.schema.json`, static `#[no_std]` envelope).
-- **Temporal Execution Ceiling:** $\tau_{\text{override}} \le 11.99\text{ms}$ (Enforced by 10ms hardware watchdog clamps).
+- **Temporal Execution Ceiling:** $\tau_{\text{override}} \le 11.99\text{ms}$ (Enforced by 5ms hardware watchdog clamps).
 - **Operational Drag Baseline:** $C_{\text{ops}} = 0$.
 - **Operational Poset Dominance (ARC-ERR-2026-001):**  
   `BREACH (POSIX 40) > REFUSAL (POSIX 32) > CORRUPT (POSIX 30) > PWC (POSIX 12) > FREEZE (POSIX 10) > PASS (POSIX 0)`
@@ -17,12 +18,25 @@
 ## Machine Contracts & Physical Enforcement Drivers
 Autonomous agents evaluating or submitting execution claims must strictly adhere to the following machine contracts and physical driver interlocks:
 
-- **Wire Contract (JSON Schema):** `core/uedo/uedo.schema.json` — Draft 2020-12, `unevaluatedProperties: false`, mandatory Ed25519 signature validation, and strictly clamped `posix_dominance_state` enums.
+- **Wire Contract (JSON Schema):** `core/uedo/uedo.schema.json` — Draft 2020-12, `unevaluatedProperties: false`, mandatory 64-byte Ed25519 signature shape validation (`^[a-fA-F0-9]{128}$`), and strictly clamped `posix_dominance_state` enums.
 - **Wire Contract (Protobuf):** `core/uedo/uedo.proto` — Canonical `PosixDominanceState` and `SkillTreeTier` enums with `_UNSPECIFIED = 0` sentinels.
-- **Rust Trait Interface:** `core/invariants/aal_traits.rs` — `#[no_std]` Admissibility Gate interfaces.
-- **Edge Silicon Filter:** `drivers/edge_silicon/ebpf_interlock_filter.c` — Linux socket filter dropping frames exceeding $4096\,\text{B}$ (`0` bytes retained) and passing valid envelopes (`skb->len`).
-- **Bipedal Physical Adapter:** `drivers/ros2_adapters/bipedal_hal_node.cpp` — ROS2 HAL enforcing zero-velocity commands and active mechanical joint damping on non-PASS dominance states with a $10\,\text{ms}$ watchdog clamp.
-- **Submersible Marine Adapter:** `drivers/ros2_adapters/submersible_hal_node.cpp` — ROS2 HAL enforcing neutral buoyancy lock and zero-thrust cutoffs on non-PASS dominance states with a $10\,\text{ms}$ watchdog clamp.
+- **Rust Trait Interface:** `core/invariants/aal_traits.rs` — `#[no_std]` Action Authorization Level interfaces.
+- **Edge Silicon Filter:** `drivers/edge_silicon/ebpf_interlock_filter.c` — Linux `SO_ATTACH_BPF` (`SEC("socket")`) filter enforcing $S_{\text{max}} \le 4096\,\text{B}$ boundaries (returns `0` to drop oversized or empty frames; returns `skb->len` to deliver valid frames).
+- **Bipedal Physical Adapter (Command MUX):** `drivers/ros2_adapters/bipedal_hal_node.cpp` — ROS 2 inline command mediator. Intercepts `/bipedal/cmd_vel_raw` under `std::mutex` synchronization, enforcing zero-velocity cutoff and active bilateral joint braking (`left_`/`right_` kinematic chains) on non-PASS states with a $5\,\text{ms}$ watchdog clamp.
+- **Submersible Marine Adapter (Command MUX):** `drivers/ros2_adapters/submersible_hal_node.cpp` — ROS 2 inline command mediator. Intercepts `/submersible/thruster_thrust_setpoints_raw` under `std::mutex` synchronization, enforcing zero-thrust setpoints and active `/submersible/ballast_safety_lock` engagement on non-PASS states with a $5\,\text{ms}$ watchdog clamp.
+
+---
+
+## SROS2 Actuation Plane Security & Exclusive Topic Ownership
+To prevent topic-level bypass attacks where unverified nodes attempt to publish directly to downstream actuator buses, the transport layer is governed by SROS2 access-control permissions:
+
+- **Actuation Bus Exclusivity:**
+  - Topic `/bipedal/cmd_vel` write access is cryptographically restricted exclusively to `bipedal_hal_node`.
+  - Topic `/submersible/thruster_thrust_setpoints` write access is cryptographically restricted exclusively to `submersible_hal_node`.
+- **Untrusted Ingress Gating:**
+  - Autonomous agents, reasoning planners, and non-deterministic producers possess write access strictly limited to raw proposal topics (`/bipedal/cmd_vel_raw` and `/submersible/thruster_thrust_setpoints_raw`).
+- **Synchronous Fail-Closed Mediation:**
+  - During `active_hold_` or `latched_breach_`, all raw proposals are synchronously dropped at callback entry with zero external bus emission.
 
 ---
 
