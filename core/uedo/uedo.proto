@@ -2,31 +2,51 @@ syntax = "proto3";
 
 package arcstone.uedo.v1;
 
+// Canonical Precedence Hierarchy:
+// POSIX 40 (BREACH) > 32 (REFUSAL) > 30 (CORRUPT) > 12 (PWC) > 10 (FREEZE) > 0 (PASS)
+enum PosixDominanceState {
+  POSIX_DOMINANCE_STATE_UNSPECIFIED = 0;
+  POSIX_0_PASS = 1;
+  POSIX_10_FREEZE = 2;
+  POSIX_12_PWC = 3;
+  POSIX_30_CORRUPT = 4;
+  POSIX_32_REFUSAL = 5;
+  POSIX_40_BREACH = 6;
+}
+
+enum SkillTreeTier {
+  SKILL_TREE_TIER_UNSPECIFIED = 0;
+  TIER_1 = 1;
+  TIER_2 = 2;
+  TIER_3 = 3;
+  TIER_4 = 4;
+}
+
 message UedoHeader {
   string uedo_uuid = 1;
   string timestamp_utc = 2;
-  string target_master_hash = 3; // "A-77-DELTA-SHIELD-LOCKED"
-  int64 sequence_frame_id = 4;
+  string target_master_hash = 3; // Invariant anchor: "A-77-DELTA-SHIELD-LOCKED"
+  uint64 sequence_frame_id = 4;
 }
 
 message HumanOperatorVector {
   string operator_id = 1;
-  string skill_tree_tier = 2;
+  SkillTreeTier skill_tree_tier = 2;
   string credential_token_b = 3;
   string macro_intent_code = 4;
-  string human_ed25519_signature = 5;
+  string human_ed25519_signature = 5; // 128-char hex string
 }
 
 message AiSynthesisVector {
-  string model_binary_hash = 1;
-  double predicted_collision_probability = 2;
-  double exergy_budget_kwh = 3;
+  string model_binary_hash = 1; // 64-char hex string (SHA-256)
+  double predicted_collision_probability = 2; // Bounded: [0.0, 1.0]
+  double exergy_budget_kwh = 3; // Bounded: >= 0.0
 }
 
 message ControlPlaneGate {
-  string posix_dominance_state = 1;
-  int32 cops_maintenance_cost = 2; // Fixed 0
-  int32 fixed_precision_digits = 3; // Fixed 8
+  PosixDominanceState posix_dominance_state = 1;
+  int32 cops_maintenance_cost = 2; // Invariant constancy clamp: 0
+  int32 fixed_precision_digits = 3; // Fixed decimal resolution: 8
 }
 
 message UnifiedEnforcementDecisionObject {
