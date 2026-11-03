@@ -21,5 +21,8 @@ jobs:
       - name: Install JSON Schema Validator
         run: npm install -g ajv-cli ajv-formats
 
-      - name: Validate UEDO Schema
-        run: ajv compile --spec=draft2020 -s core/uedo/uedo.schema.json
+      - name: Validate UEDO Schema Compilation
+        run: ajv compile --spec=draft2020 -c ajv-formats -s core/uedo/uedo.schema.json
+
+      - name: Validate System Manifest JSON Syntax
+        run: npx jsonlint -q machine/system-manifest.json
