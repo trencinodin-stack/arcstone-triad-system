@@ -14,9 +14,12 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Rust Toolchain
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.82.0
         with:
           targets: thumbv7em-none-eabihf # #![no_std] verification target
 
-      - name: Check Rust Trait Syntax
-        run: cargo check --manifest-path Cargo.toml || true
+      - name: Check Rust Invariant Traits (Host)
+        run: cargo check --manifest-path Cargo.toml
+
+      - name: Check Bare-Metal #![no_std] Target
+        run: cargo check --manifest-path Cargo.toml --target thumbv7em-none-eabihf
