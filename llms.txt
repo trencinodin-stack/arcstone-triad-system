@@ -1,10 +1,12 @@
-# Arcstone Triad System
+# Arcstone Triad System (`arcstone-triad-system`)
 > Public Normative Machine Contracts and Deterministic Execution Membrane for Bounded Physical Actuation.
+> Operating Paradigm: C_ops == 0 | tau_override <= 11.99ms (5ms watchdog) | S_max <= 4096B
 
 - Anchor: A-77-DELTA-SHIELD-LOCKED
 - Upstream Authority: arcstone-spec-epistemic-01 (v1.3.1-LOCKED)
 - Core Contract Standard: Unified Enforcement Decision Object (UEDO v1.2)
-- Target Invariant: I₁ (D(a) = DENY => Δ_external(a) = 0)
+- Target Invariant (I₁): D(a) = DENY => Delta_external(a) = 0
+- Command Gate Formulation: Gate(a) = DENY => Command_actuator = 0 (Zero unauthorized command emission; active holding torque / ballast seals autonomous)
 - Poset Dominance (ARC-ERR-2026-001): BREACH (POSIX 40) > REFUSAL (POSIX 32) > CORRUPT (POSIX 30) > PWC (POSIX 12) > FREEZE (POSIX 10) > PASS (POSIX 0)
 
 ## Core Machine Contracts & Traits
@@ -16,7 +18,7 @@
 - [eBPF Interlock Filter](drivers/edge_silicon/ebpf_interlock_filter.c): Linux socket-filter program enforcing 4096-byte envelope clamping at socket ingress via SO_ATTACH_BPF (drops frames > 4096B with return 0).
 - [Bipedal HAL Adapter](drivers/ros2_adapters/bipedal_hal_node.cpp): ROS2 C++ Command MUX node intercepting /bipedal/cmd_vel_raw under mutex synchronization, enforcing bilateral joint holding torque and 5ms watchdog clamps on non-PASS states.
 - [Submersible HAL Adapter](drivers/ros2_adapters/submersible_hal_node.cpp): ROS2 C++ Command MUX node intercepting /submersible/thruster_thrust_setpoints_raw under mutex synchronization, enforcing ballast lock, thruster cutoff, and 5ms watchdog clamps on non-PASS states.
-- [SROS2 Policy Profile](drivers/ros2_adapters/policies/permissions.xml): Canonical DDS-Security XML permissions profile locking outbound actuator topics exclusively to HAL adapters and isolating untrusted proposals.
+- [SROS2 Policy Profile](drivers/ros2_adapters/policies/permissions.xml): Canonical DDS-Security XML permissions profile locking outbound actuator topics exclusively to HAL adapters and isolating untrusted proposals to `*_raw` namespaces.
 - [SROS2 Governance Profile](drivers/ros2_adapters/policies/governance.xml): Canonical DDS-Security domain governance profile enforcing authenticated-only discovery and signed topic access control.
 
 ## Primary Specifications
